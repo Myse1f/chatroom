@@ -52,7 +52,7 @@ public class Client {
 		}
 	}
 
-    	/*
+    /*
 	 * When something goes wrong
 	 * Close the Input/Output streams and disconnect not much to do in the catch clause
 	 */
