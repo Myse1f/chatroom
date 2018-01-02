@@ -23,11 +23,56 @@ public class Client {
         this.cg = cg;
     }
 
+    public boolean login() {
+        try {
+            socket = new Socket(server, port);
+        }
+        catch(Exception e) {
+            cg.dialog("Connect Error!");
+            return false;
+        }
+
+        try {
+            sInput = new ObjectInputStream(socket.getInputStream());
+            sOutput = new ObjectInputStream(socket.getOutputStream());
+        }
+        catch(IOException eIO) {
+            dialog("Exception on creating I/O stream");
+            return false;
+        }
+
+        boolean ret;
+        try {
+            sOutput.writeObject(usename);
+            sOutput.writeObject(password);
+            ret = sInput.readObject();
+            
+        }
+        catch(IOException eIO) {
+            dialog("Exception happens when verifing!");
+            return false;
+        }
+        //verify
+        if(!ret) {
+            dialog("user name or password is error!")
+            return false;
+        }
+
+        new ListenFromServer.start();
+
+        return true;
+    }
+
+
     //send a messag to GUI
     private void display(String msg) {
         cg.append(msg + "\n");
     }
 
+    private void dialog(String info) {
+        cg.dialog(info);
+    }
+    
     /*
      * send a message to server
      */
