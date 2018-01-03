@@ -117,5 +117,24 @@ public class Client {
 
 		cg.connectionFailed();
 			
-	}
+    }
+    
+    class ListenFromServer extends Thread {
+        public void run() {
+            while(true) {
+                try {
+                    String msg = (String)sInput.readObject();
+                    cg.append(msg);
+                }
+                catch(IOException eIO) {
+                    display("Server has closed the connection " + e);
+                    cg.connectionFailed();
+                    break;
+                }
+                catch(ClassNotFoundException e2) {
+                    //nothing I can do
+                }
+            }
+        }
+    }
 }
