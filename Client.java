@@ -63,6 +63,9 @@ public class Client {
         return true;
     }
 
+    public boolean register() {
+        
+    }
 
     //send a messag to GUI
     private void display(String msg) {
