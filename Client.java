@@ -2,6 +2,7 @@ import java.net.*;
 import java.io.*;
 import java.util.*;
 
+
 public class Client {
     //for I/O
     private ObjectInputStream sInput;
@@ -19,7 +20,7 @@ public class Client {
     //constructor
     public Client(String username, String password, ClientGUI cg) {
         this.username = username;
-        this.password = password;
+        this.password = SHA1.getResult(password);
         this.cg = cg;
     }
 
@@ -38,23 +39,25 @@ public class Client {
         }
         catch(IOException eIO) {
             dialog("Exception on creating I/O stream");
+            socket.close();
             return false;
         }
 
         boolean ret;
         try {
-            sOutput.writeObject(usename);
-            sOutput.writeObject(password);
-            ret = sInput.readObject();
-            
+            sOutput.writeObject(new UserInfo(UserInfo.LOGIN, username, password));
+            //sOutput.writeObject(password);
+            ret = (Boolean) sInput.readObject();           
         }
         catch(IOException eIO) {
             dialog("Exception happens when verifing!");
+            disconnect();
             return false;
         }
         //verify
         if(!ret) {
             dialog("user name or password is error!")
+            disconnect();
             return false;
         }
 
@@ -64,7 +67,35 @@ public class Client {
     }
 
     public boolean register() {
-        
+        try {
+            socket = new Socket(server, port);
+        }
+        catch(Exception e) {
+            cg.dialog("Connect Error!");
+            return false;
+        }
+
+        boolean ret;
+        try {
+            sOutput.writeObject(new UserInfo(UserInfo.REGISTER, username, password));
+            //sOutput.writeObject(password);
+            ret = (Boolean) sInput.readObject();           
+        }
+        catch(IOException eIO) {
+            dialog("Exception happens when registering!");
+            disconnect();
+            return false;
+        }
+        //register
+        if(!ret) {
+            dialog("User name is existed!")
+            disconnect();
+            return false;
+        }
+
+        dialog("Register successfully!");
+        disconnect();
+        return true;
     }
 
     //send a messag to GUI
@@ -73,7 +104,7 @@ public class Client {
     }
 
     private void dialog(String info) {
-        cg.dialog(info);
+        cg.dialog(info + '\n');
     }
     
     /*
