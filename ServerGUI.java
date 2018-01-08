@@ -5,7 +5,7 @@ import java.awt.event.*;
 /*
  * Server GUI
  */
-class ServerGUI extends JFrame implements ActionListener, WindowListener{
+public class ServerGUI extends JFrame implements ActionListener, WindowListener{
     
     private static final long serialVersionUID = 1L;
     //stop or start button
