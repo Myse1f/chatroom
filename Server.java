@@ -49,12 +49,12 @@ public class Server {
                 UserInfo ui = (UserInfo) ois.readObject();
                 switch(ui.getType()) {
                     case UserInfo.LOGIN:
-                        RegisterThread t = new RegisterThread(socket, ui);
+                        RegisterThread t1 = new RegisterThread(socket, ui);
                         t.start();
                         break;
                     case UserInfo.REGISTER:
-                        ClientThread t = new ClientThread(socket, ui);  // make a thread of it
-                        al.add(t);									// save it in the ArrayList
+                        ClientThread t2 = new ClientThread(socket, ui);  // make a thread of it
+                        al.add(t2);									// save it in the ArrayList
                         t.start();
                         break;
                 }
