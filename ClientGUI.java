@@ -1,6 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event;
+import java.awt.event.*;
 
 /*
  * Client GUI
@@ -25,15 +25,18 @@ public class ClientGUI extends JFrame implements ActionListener {
 	private int defaultPort;
 	private String defaultHost;
 	
-    private LoginGUI lg = new LoginGUI();
+    private LoginGUI lg;
     
     // Constructor connection receiving a socket number
-	ClientGUI(String host, int port) {
+	ClientGUI() {
         
         super("Chat Client");
-        
-        defaultPort = port;
-        defaultHost = host;
+        lg = new LoginGUI();
+        lg.setVisible(true);
+        setVisible(false);
+
+        int port = Client.port;
+        String host = Client.server;
         
         // The NorthPanel with:
         JPanel northPanel = new JPanel(new GridLayout(3,1));
@@ -42,6 +45,8 @@ public class ClientGUI extends JFrame implements ActionListener {
         // the two JTextField with default value for server address and port number
         tfServer = new JTextField(host);
         tfPort = new JTextField("" + port);
+        tfServer.setEditable(false);
+        tfPort.setEditable(false);
 
 
         serverAndPort.add(new JLabel("Server Address:  ", SwingConstants.CENTER));
@@ -74,7 +79,7 @@ public class ClientGUI extends JFrame implements ActionListener {
         ta.setEditable(false);
         add(centerPanel, BorderLayout.CENTER);
 
-        // the 3 buttons
+        // the logout and whoIsIn buttons
         logout = new JButton("Logout");
         logout.addActionListener(this);
         logout.setEnabled(false);		// you have to login before being able to logout
@@ -95,6 +100,15 @@ public class ClientGUI extends JFrame implements ActionListener {
         
     }
 
+    public void dialog(String info) {
+        //String infoLF = info + '\n';
+        JOptionPane.showMessageDialog(this, info, "Warning!", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e){
+        
+    }
 
     class LoginGUI extends JFrame implements ActionListener{
 		/**
@@ -138,13 +152,26 @@ public class ClientGUI extends JFrame implements ActionListener {
 			Object o = e.getSource();
 			
 			if(o == Login) {
-				client.sendInfo(new UserInfo(UserInfo.LOGIN, tfUser.getText().trim(), tfPassword.getText()));
-				return;
+                client = new Client(tfUser.getText().trim(), tfPassword.getText(), this.outer);
+                if(client.login()) {
+                    this.setVisible(false); 
+                    this.outer.setVisible(true);
+                }
+                tfUser.setText("");
+                tfPassword.setText("");
+                return;
 			}
 			
 			if(o == Register) {
-				client.sendInfo(new UserInfo(UserInfo.REGISTER, tfUser.getText().trim(), tfPassword.getText()));
-				return;
+                client = new Client(tfUser.getText().trim(), tfPassword.getText(), this.outer);
+                if(client.register()) {
+                    tfPassword.setText("");
+                }
+                else {
+                    tfUser.setText("");
+                    tfPassword.setText("");
+                }
+                return;
 			}
 		}
 	}
