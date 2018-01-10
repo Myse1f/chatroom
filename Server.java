@@ -17,7 +17,7 @@ public class Server {
 	// the boolean that will be turned of to stop the server
 	private boolean keepGoing;
 
-    public Server(int port, ServerGUI sg) {
+    public Server(ServerGUI sg) {
 		// GUI or not
 		this.sg = sg;
 		// to display hh:mm:ss

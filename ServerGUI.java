@@ -113,7 +113,11 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener{
 	public void windowDeiconified(WindowEvent e) {}
 	public void windowActivated(WindowEvent e) {}
     public void windowDeactivated(WindowEvent e) {}
-    
+	
+	public static void main(String []args) {
+		new ServerGUI(2000);
+	}
+
     /*
 	 * A thread to run the Server
 	 */
