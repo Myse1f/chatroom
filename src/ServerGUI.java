@@ -20,7 +20,7 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener{
     //constructor 
     public ServerGUI(int port) {
         super("Chatroom Server");
-        server = NULL;
+        server = null;
         // in the NorthPanel the PortNumber the Start and Stop buttons
 		JPanel north = new JPanel();
 		north.add(new JLabel("Port number: "));
@@ -82,7 +82,7 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener{
 			return;
 		}
 		// ceate a new Server
-		server = new Server(port, this);
+		server = new Server(this);
 		// and start it as a thread
 		new ServerRunning().start();
 		stopStart.setText("Stop");

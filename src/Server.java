@@ -45,17 +45,18 @@ public class Server {
 				if(!keepGoing)
 					break;
 
-                ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-                UserInfo ui = (UserInfo) ois.readObject();
+				ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+				UserInfo ui = (UserInfo) ois.readObject();
+
                 switch(ui.getType()) {
-                    case UserInfo.LOGIN:
-                        RegisterThread t1 = new RegisterThread(socket, ui);
-                        t.start();
-                        break;
                     case UserInfo.REGISTER:
+                        RegisterThread t1 = new RegisterThread(socket, ui);
+                        t1.start();
+                        break;
+                    case UserInfo.LOGIN:
                         ClientThread t2 = new ClientThread(socket, ui);  // make a thread of it
                         al.add(t2);									// save it in the ArrayList
-                        t.start();
+                        t2.start();
                         break;
                 }
 
@@ -84,6 +85,9 @@ public class Server {
 		catch (IOException e) {
             String msg = sdf.format(new Date()) + " Exception on new ServerSocket: " + e + "\n";
 			display(msg);
+		}
+		catch(ClassNotFoundException e) {
+			//nothing I can really do
 		}
 	}
 
@@ -118,7 +122,7 @@ public class Server {
 			// try to write to the Client if it fails remove it from the list
 			if(!ct.writeMsg(messageLf)) {
 				al.remove(i);
-				display("Disconnected Client " + ct.username + " removed from list.");
+				display("Disconnected Client " + ct.ui.getName() + " removed from list.");
 			}
 		}
 	}
@@ -172,10 +176,7 @@ public class Server {
 				display("Exception creating new I/O Streams: " + e);
 				return;
 			}
-			// catch ClassNotFoundException
-			catch (ClassNotFoundException e) {
-                // nothing I can do
-			}
+
             date = new Date().toString() + "\n";
 		}
 
@@ -183,11 +184,12 @@ public class Server {
             String tmp = db.getPassword(ui.getName());
             if(tmp.equals("-1")) {
                 //the user is not existed
-                display("The username " + ui.getName() + " is not existed!");
+				display("The username " + ui.getName() + " is not existed!");
+				
                 return false;
             }
             else if(!tmp.equals(ui.getPassword())) {
-                dispaly(ui.getName() + ": password is incorrect!");
+                display(ui.getName() + ": password is incorrect!");
                 return false;
             }
 
@@ -202,7 +204,7 @@ public class Server {
                     sOutput.writeObject(new Boolean(false));
                 }
                 catch(IOException ioE) {
-                    display("Error sending result to " + username);
+                    display("Error sending result to " + ui.getName());
                 }
                 return;
             }
@@ -210,7 +212,7 @@ public class Server {
                 sOutput.writeObject(new Boolean(true));
             }
             catch(IOException ioE) {
-                display("Error sending result to " + username);
+                display("Error sending result to " + ui.getName());
             }           
             
             //to loop until LOGOUT
@@ -220,7 +222,7 @@ public class Server {
 					cm = (ChatMessage) sInput.readObject();
 				}
 				catch (IOException e) {
-					display(username + " Exception reading Streams: " + e);
+					display(ui.getName() + " Exception reading Streams: " + e);
 					break;				
 				}
 				catch(ClassNotFoundException e2) {
@@ -288,12 +290,83 @@ public class Server {
 			}
 			// if an error occurs, do not abort just inform the user
 			catch(IOException e) {
-				display("Error sending message to " + username);
+				display("Error sending message to " + ui.getName());
 				display(e.toString());
 			}
 			return true;
 		}
     }
-    
+	
+	class RegisterThread extends Thread {
+
+		// the socket where to listen/talk
+		Socket socket;
+		DBControl db;
+		ObjectInputStream sInput;
+		ObjectOutputStream sOutput;
+		// the UserInfo of the Client
+		UserInfo ui;
+		//date
+
+		RegisterThread(Socket socket, UserInfo ui) {
+			this.socket = socket;
+            this.ui = ui;
+			db = new DBControl();
+			/* Creating both Data Stream */
+			System.out.println("Thread trying to create Object Input/Output Streams");
+			try
+			{
+				// create output first
+				sOutput = new ObjectOutputStream(socket.getOutputStream());
+				sInput  = new ObjectInputStream(socket.getInputStream());
+				// read the username and password
+				display(ui.getName() + " is trying to connect.");
+			}
+			catch (IOException e) {
+				display("Exception creating new I/O Streams: " + e);
+				return;
+			}
+
+		}
+
+		public void run() {
+			if(!db.addUser(ui.getName(), ui.getPassword())) {
+				//add user failed
+				try {
+					sOutput.writeObject(new Boolean(false));
+				}
+				catch(IOException ioE) {
+					display("Error sending result to " + ui.getName());
+				}
+			}
+			else {
+				try {
+					sOutput.writeObject(new Boolean(true));
+				}
+				catch(IOException ioE) {
+					display("Error sending result to " + ui.getName());
+				}
+			}
+			close();
+		}
+
+		// try to close everything
+		private void close() {
+			// try to close the connection
+			try {
+				if(sOutput != null) sOutput.close();
+			}
+			catch(Exception e) {}
+			try {
+				if(sInput != null) sInput.close();
+			}
+			catch(Exception e) {};
+			try {
+				if(socket != null) socket.close();
+			}
+			catch (Exception e) {}
+			db.DBClose();
+		}
+	}
 
 }
