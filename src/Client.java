@@ -15,13 +15,17 @@ public class Client {
     //the server, port and user name and password
     final static int port = 2000;
     final static String server = "localhost";
-    private String username, password;
+    private String username="", password="";
 
     //constructor
     public Client(String username, String password, ClientGUI cg) {
         this.username = username;
         this.password = SHA1.getResult(password);
         this.cg = cg;
+    }
+
+    public String getUsername() {
+        return username;
     }
 
     public boolean login() {
@@ -56,7 +60,7 @@ public class Client {
         }
         //verify
         if(!ret) {
-            dialog("user name or password is error!")
+            dialog("User name or password is error!");
             disconnect();
             return false;
         }
@@ -88,7 +92,7 @@ public class Client {
         }
         //register
         if(!ret) {
-            dialog("User name is existed!")
+            dialog("User name is existed!");
             disconnect();
             return false;
         }
@@ -110,7 +114,7 @@ public class Client {
     /*
      * send a message to server
      */
-    private void sendMessage(ChatMessage msg) {
+    public void sendMessage(ChatMessage msg) {
         try{
             sOutput.writeObject(msg);
         }
@@ -122,7 +126,7 @@ public class Client {
     /*
 	 * To send a User Information to the server
 	 */
-	void sendInfo(UserInfo ui) {
+	public void sendInfo(UserInfo ui) {
 		try {
 			sOutput.writeObject(ui);
 		}
