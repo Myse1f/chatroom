@@ -6,9 +6,9 @@ import java.awt.event.*;
 /*
  * Client GUI
  */
-public class ClientGUI extends JFrame implements ActionListener {
+public class ClientGUI extends JFrame implements ActionListener, KeyListener {
     private static final long serialVersionUID = 1L;
-	// will first hold "Username:", later on "Enter message"
+	// will first hold "Username:"
 	private JLabel label;
 	// to hold on the messages
 	private JTextArea tm;
@@ -51,20 +51,20 @@ public class ClientGUI extends JFrame implements ActionListener {
         northPanel.add(serverAndPort);
 
         //name label
-        label = new JLabel("Your Name: " + client.getUsername(), SwingConstants.CENTER);
+        label = new JLabel("Your Name: ", SwingConstants.CENTER);
         northPanel.add(label);
         add(northPanel, BorderLayout.NORTH);
 
         JPanel centerPanel = new JPanel(new GridLayout(2,1));
         // The CenterPanel which is the chat room
-        ta = new JTextArea("Welcome to the Chat room!\n", 60, 80);
+        ta = new JTextArea("Welcome to the Chat room!\n", 10, 80);
         ta.setLineWrap(true);
         centerPanel.add(new JScrollPane(ta));
         ta.setEditable(false);
-        tm = new JTextArea(20, 80);
+        tm = new JTextArea(10, 80);
         tm.setLineWrap(true);
         tm.setEditable(true);
-        tm.addActionListener(this);
+        tm.addKeyListener(this);
         centerPanel.add(new JScrollPane(tm));
         add(centerPanel, BorderLayout.CENTER);
 
@@ -97,7 +97,6 @@ public class ClientGUI extends JFrame implements ActionListener {
     }
 
     // called by the GUI is the connection failed
-	// we reset our buttons, label, textfield
 	void connectionFailed() {
         lg.setVisible(true);
         this.setVisible(false);
@@ -114,9 +113,24 @@ public class ClientGUI extends JFrame implements ActionListener {
         //logout
         if(o == logout) {
             client.sendMessage(new ChatMessage(ChatMessage.LOGOUT, ""));
-            connectionFailed();
+            client.disconnect();
             return;
         }
+        //who is in
+        else if(o == whoIsIn) {
+            client.sendMessage(new ChatMessage(ChatMessage.WHOISIN, ""));
+            return;
+        }
+        //send
+        else if(o == send){
+            client.sendMessage(new ChatMessage(ChatMessage.MESSAGE, tm.getText()));
+            tm.setText("");
+            return;
+        }
+    }
+
+    public static void main(String[] args) {
+        new ClientGUI();
     }
 
     class LoginGUI extends JFrame implements ActionListener{
@@ -129,7 +143,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 		private JLabel user = new JLabel("User Name:  ", SwingConstants.CENTER);
 		private JLabel password = new JLabel("Password:  ", SwingConstants.CENTER);
 		private JTextField tfUser = new JTextField(0);
-		private JTextField tfPassword = new JTextField(15);	
+		private JPasswordField tfPassword = new JPasswordField(15);	
 		private JButton login = new JButton("Login");
 		private JButton register = new JButton("Register");
 		
@@ -147,7 +161,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 			contentPanel.add(login);
 			login.addActionListener(this);
 			contentPanel.add(register);
-			Register.addActionListener(this);
+			register.addActionListener(this);
 			add(contentPanel, BorderLayout.SOUTH);
 			
 		
@@ -160,7 +174,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
 			Object o = e.getSource();
             String username = tfUser.getText().trim();
-            String password = tfPassword.getText();
+            String password = new String(tfPassword.getPassword());
             if(username.length() == 0) {
                 dialog("Username should not be empty!");
                 return;
@@ -171,9 +185,11 @@ public class ClientGUI extends JFrame implements ActionListener {
             }
 			if(o == login) {
                 client = new Client(username, password, ClientGUI.this);
+                
                 if(client.login()) {
                     this.setVisible(false); 
                     ClientGUI.this.setVisible(true);
+                    label = new JLabel("Your Name: " + client.getUsername(), SwingConstants.CENTER);
                     ta.setText("Welcome to the Chat room!\n");
                     tm.setText("");
                     tm.requestFocus();
@@ -197,5 +213,27 @@ public class ClientGUI extends JFrame implements ActionListener {
                 return;
 			}
 		}
+	}
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void keyTyped(KeyEvent e) {
+		//ctrl + enter 一起按下， 发送信息
+		if (e.getModifiers() == KeyEvent.CTRL_MASK && e.getKeyChar() == KeyEvent.VK_ENTER) {
+			client.sendMessage(new ChatMessage(ChatMessage.MESSAGE, tm.getText()));
+            tm.setText("");
+		}
+			
 	}
 }

@@ -72,15 +72,7 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener{
 			stopStart.setText("Start");
 			return;
 		}
-      	// OK start the server	
-		int port;
-		try {
-			port = Integer.parseInt(tPortNumber.getText().trim());
-		}
-		catch(Exception er) {
-			appendEvent("Invalid port number");
-			return;
-		}
+
 		// ceate a new Server
 		server = new Server(this);
 		// and start it as a thread
@@ -115,7 +107,7 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener{
     public void windowDeactivated(WindowEvent e) {}
 	
 	public static void main(String []args) {
-		new ServerGUI(2000);
+		new ServerGUI(1500);
 	}
 
     /*

@@ -6,16 +6,17 @@ import java.util.*;
 public class Client {
     //for I/O
     private ObjectInputStream sInput;
-    private ObjectInputStream sOutput;
+    private ObjectOutputStream sOutput;
     private Socket socket;
 
     //client GUI
     private ClientGUI cg;
 
     //the server, port and user name and password
-    final static int port = 2000;
+    final static int port = 1500;
     final static String server = "localhost";
-    private String username="", password="";
+    private String username="";
+    private String password="";
 
     //constructor
     public Client(String username, String password, ClientGUI cg) {
@@ -36,18 +37,19 @@ public class Client {
             cg.dialog("Connect Error!");
             return false;
         }
-
+        
         try {
             sInput = new ObjectInputStream(socket.getInputStream());
-            sOutput = new ObjectInputStream(socket.getOutputStream());
+            sOutput = new ObjectOutputStream(socket.getOutputStream());
+            System.out.println("123");
         }
         catch(IOException eIO) {
             dialog("Exception on creating I/O stream");
-            socket.close();
+            disconnect();
             return false;
         }
 
-        boolean ret;
+        boolean ret = false;
         try {
             sOutput.writeObject(new UserInfo(UserInfo.LOGIN, username, password));
             //sOutput.writeObject(password);
@@ -58,6 +60,9 @@ public class Client {
             disconnect();
             return false;
         }
+        catch(ClassNotFoundException e) {
+        	//nothing i can do
+        }
         //verify
         if(!ret) {
             dialog("User name or password is error!");
@@ -65,7 +70,7 @@ public class Client {
             return false;
         }
 
-        new ListenFromServer.start();
+        new ListenFromServer().start();
 
         return true;
     }
@@ -79,7 +84,7 @@ public class Client {
             return false;
         }
 
-        boolean ret;
+        boolean ret = false;
         try {
             sOutput.writeObject(new UserInfo(UserInfo.REGISTER, username, password));
             //sOutput.writeObject(password);
@@ -89,6 +94,9 @@ public class Client {
             dialog("Exception happens when registering!");
             disconnect();
             return false;
+        }
+        catch(ClassNotFoundException e) {
+        	//nothing i can do
         }
         //register
         if(!ret) {
@@ -139,7 +147,7 @@ public class Client {
 	 * When something goes wrong
 	 * Close the Input/Output streams and disconnect not much to do in the catch clause
 	 */
-	private void disconnect() {
+	public void disconnect() {
 		try { 
 			if(sInput != null) sInput.close();
 		}
@@ -165,11 +173,11 @@ public class Client {
                     cg.append(msg);
                 }
                 catch(IOException eIO) {
-                    display("Server has closed the connection " + e);
+                    display("Server has closed the connection " + eIO);
                     cg.connectionFailed();
                     break;
                 }
-                catch(ClassNotFoundException e2) {
+                catch(ClassNotFoundException e) {
                     //nothing I can do
                 }
             }

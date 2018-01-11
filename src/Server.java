@@ -13,7 +13,7 @@ public class Server {
 	// to display time
 	private SimpleDateFormat sdf;
 	// the port number to listen for connection
-	public static final int port = 2000;
+	public static final int port = 1500;
 	// the boolean that will be turned of to stop the server
 	private boolean keepGoing;
 
@@ -41,11 +41,13 @@ public class Server {
 				display("Server waiting for Clients on port " + port + ".");
 				
 				Socket socket = serverSocket.accept();  	// accept connection
+				sg.appendEvent("accept!");
 				// if I was asked to stop
 				if(!keepGoing)
 					break;
 
 				ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+				sg.appendEvent("accept!");
 				UserInfo ui = (UserInfo) ois.readObject();
 
                 switch(ui.getType()) {
@@ -59,7 +61,8 @@ public class Server {
                         t2.start();
                         break;
                 }
-
+                
+                ois.close();
 
 			}
 			// I was asked to stop
