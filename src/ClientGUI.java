@@ -2,6 +2,7 @@ import javax.naming.event.ObjectChangeListener;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.net.NoRouteToHostException;
 
 /*
  * Client GUI
@@ -29,7 +30,7 @@ public class ClientGUI extends JFrame implements ActionListener, KeyListener {
         super("Chat Client");
         lg = new LoginGUI();
 
-        int port = Client.port;
+        int port = Client.loginPort;
         String host = Client.server;
         
         // The NorthPanel with:
@@ -60,7 +61,7 @@ public class ClientGUI extends JFrame implements ActionListener, KeyListener {
         ta = new JTextArea("Welcome to the Chat room!\n", 10, 80);
         ta.setLineWrap(true);
         centerPanel.add(new JScrollPane(ta));
-        ta.setEditable(false);
+        ta.setEditable(false);        
         tm = new JTextArea(10, 80);
         tm.setLineWrap(true);
         tm.setEditable(true);
@@ -189,7 +190,7 @@ public class ClientGUI extends JFrame implements ActionListener, KeyListener {
                 if(client.login()) {
                     this.setVisible(false); 
                     ClientGUI.this.setVisible(true);
-                    label = new JLabel("Your Name: " + client.getUsername(), SwingConstants.CENTER);
+                    label.setText("Your Name: " + client.getUsername());
                     ta.setText("Welcome to the Chat room!\n");
                     tm.setText("");
                     tm.requestFocus();

@@ -5,15 +5,20 @@ import java.util.*;
 
 public class Client {
     //for I/O
-    private ObjectInputStream sInput;
-    private ObjectOutputStream sOutput;
-    private Socket socket;
+    private ObjectInputStream loginInput;
+    private ObjectOutputStream loginOutput;
+    private ObjectInputStream registerInput;
+    private ObjectOutputStream registerOutput;
+    private Socket loginSocket;
+    private Socket registerSocket;
+    public static final int LOGIN = 0, REGISTER = 1;
 
     //client GUI
     private ClientGUI cg;
 
     //the server, port and user name and password
-    final static int port = 1500;
+    final static int loginPort = 1500;
+    final static int registerPort = 2000;
     final static String server = "localhost";
     private String username="";
     private String password="";
@@ -31,7 +36,7 @@ public class Client {
 
     public boolean login() {
         try {
-            socket = new Socket(server, port);
+            loginSocket = new Socket(server, loginPort);
         }
         catch(Exception e) {
             cg.dialog("Connect Error!");
@@ -39,36 +44,35 @@ public class Client {
         }
         
         try {
-            sOutput = new ObjectOutputStream(socket.getOutputStream());
+        	loginInput = new ObjectInputStream(loginSocket.getInputStream());
+            loginOutput = new ObjectOutputStream(loginSocket.getOutputStream());            
             //System.out.println("123");
         }
         catch(IOException eIO) {
-            dialog("Exception on creating Ouput stream");
-            disconnect();
+            dialog("Exception on creating login I/O stream");
             return false;
         }
 
-        boolean ret = false;
+        int ret = 0;
         try {
-            sOutput.writeObject(new UserInfo(UserInfo.LOGIN, username, password));
-            //sOutput.writeObject(password);
-            sInput = new ObjectInputStream(socket.getInputStream());
-            System.out.println("213");
-            ret = (Boolean) sInput.readObject();           
+            loginOutput.writeObject(new UserInfo(UserInfo.LOGIN, username, password));
+            ret = (Integer) loginInput.readObject();           
         }
         catch(IOException eIO) {
             dialog("Exception happens when verifing!");
-            disconnect();
             return false;
         }
         catch(ClassNotFoundException e) {
         	//nothing i can do
         }
         //verify
-        if(!ret) {
+        if(ret == 0) {
             dialog("User name or password is error!");
-            disconnect();
             return false;
+        }
+        if(ret == -1) {
+        	dialog("User has been in chat room!");
+        	return false;
         }
 
         new ListenFromServer().start();
@@ -78,33 +82,32 @@ public class Client {
 
     public boolean register() {
         try {
-            socket = new Socket(server, port);
+            registerSocket = new Socket(server, registerPort);
         }
         catch(Exception e) {
             cg.dialog("Connect Error!");
             return false;
         }
 
-        try {
-            sOutput = new ObjectOutputStream(socket.getOutputStream());
-            System.out.println("123");
+        try {  
+            registerInput = new ObjectInputStream(registerSocket.getInputStream());
+            registerOutput = new ObjectOutputStream(registerSocket.getOutputStream());
+            //System.out.println("123");
         }
         catch(IOException eIO) {
-            dialog("Exception on creating Ouput stream");
-            disconnect();
+            dialog("Exception on creating register I/O stream");
             return false;
         }
 
         boolean ret = false;
         try {
-            sOutput.writeObject(new UserInfo(UserInfo.REGISTER, username, password));
+            registerOutput.writeObject(new UserInfo(UserInfo.REGISTER, username, password));
             //sOutput.writeObject(password);
-            sInput = new ObjectInputStream(socket.getInputStream());
-            ret = (Boolean) sInput.readObject();           
+            
+            ret = (Boolean) registerInput.readObject();           
         }
         catch(IOException eIO) {
             dialog("Exception happens when registering!");
-            disconnect();
             return false;
         }
         catch(ClassNotFoundException e) {
@@ -113,12 +116,10 @@ public class Client {
         //register
         if(!ret) {
             dialog("User name is existed!");
-            disconnect();
             return false;
         }
 
         dialog("Register successfully!");
-        disconnect();
         return true;
     }
 
@@ -136,7 +137,7 @@ public class Client {
      */
     public void sendMessage(ChatMessage msg) {
         try{
-            sOutput.writeObject(msg);
+            loginOutput.writeObject(msg);
         }
         catch(IOException e){
             display("Exception on send message to server: " + e);
@@ -146,12 +147,15 @@ public class Client {
     /*
 	 * To send a User Information to the server
 	 */
-	public void sendInfo(UserInfo ui) {
+	public void sendInfo(UserInfo ui, int mode) {
 		try {
-			sOutput.writeObject(ui);
+			if(mode == LOGIN)
+				loginOutput.writeObject(ui);
+			else if(mode == REGISTER)
+				registerOutput.writeObject(ui);
 		}
 		catch(IOException e) {
-			display("Exception on send userinfo to server: " + e);
+			dialog("Exception on send userinfo to server: " + e);
 		}
 	}
 
@@ -161,15 +165,18 @@ public class Client {
 	 */
 	public void disconnect() {
 		try { 
-			if(sInput != null) sInput.close();
+			if(loginInput != null) loginInput.close();
+			if(registerInput != null) registerInput.close();
 		}
 		catch(Exception e) {} // not much else I can do
 		try {
-			if(sOutput != null) sOutput.close();
+			if(loginOutput != null) loginOutput.close();
+			if(registerOutput != null) registerOutput.close();
 		}
 		catch(Exception e) {} // not much else I can do
         try{
-			if(socket != null) socket.close();
+			if(loginSocket != null) loginSocket.close();
+			if(registerSocket != null) registerSocket.close();
 		}
 		catch(Exception e) {} // not much else I can do
 
@@ -179,15 +186,15 @@ public class Client {
     
     class ListenFromServer extends Thread {
             
-
         public void run() {
             while(true) {
                 try {
-                    String msg = (String)sInput.readObject();
+                    String msg = (String)loginInput.readObject();
                     cg.append(msg);
                 }
                 catch(IOException eIO) {
                     display("Server has closed the connection " + eIO);
+                    disconnect();
                     cg.connectionFailed();
                     break;
                 }

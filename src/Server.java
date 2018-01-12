@@ -13,10 +13,14 @@ public class Server {
 	// to display time
 	private SimpleDateFormat sdf;
 	// the port number to listen for connection
-	public static final int port = 1500;
+	public static final int loginPort = 1500;
+	public static final int registerPort = 2000;
 	// the boolean that will be turned of to stop the server
-	private boolean keepGoing;
-
+	//private boolean keepGoing;
+	//thread for login and register
+	private StartLogin sl;
+	private StartRegister sr;
+	
     public Server(ServerGUI sg) {
 		// GUI or not
 		this.sg = sg;
@@ -24,82 +28,25 @@ public class Server {
 		sdf = new SimpleDateFormat("HH:mm:ss");
 		// ArrayList for the Client list
 		al = new ArrayList<ClientThread>();
+		
+		//initilize thread
+		sl = new StartLogin();
+		sr = new StartRegister();
 	}
 
     public void start() {
-		keepGoing = true;
-		/* create socket server and wait for connection requests */
-		try 
-		{
-			// the socket used by the server
-			ServerSocket serverSocket = new ServerSocket(port);
-
-			// infinite loop to wait for connections
-			while(keepGoing) 
-			{
-				// format message saying we are waiting
-				display("Server waiting for Clients on port " + port + ".");
-				
-				Socket socket = serverSocket.accept();  	// accept connection
-				//sg.appendEvent("accept!");
-				// if I was asked to stop
-				if(!keepGoing)
-					break;
-
-				ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-				//sg.appendEvent("accept!");
-				UserInfo ui = (UserInfo) ois.readObject();
-
-                switch(ui.getType()) {
-                    case UserInfo.REGISTER:
-                        RegisterThread t1 = new RegisterThread(socket, ois, ui);
-                        t1.start();
-                        break;
-                    case UserInfo.LOGIN:
-                        ClientThread t2 = new ClientThread(socket, ois, ui);  // make a thread of it
-                        al.add(t2);									// save it in the ArrayList
-                        t2.start();
-                        break;
-                }
-                
-                ois.close();
-
-			}
-			// I was asked to stop
-			try {
-				serverSocket.close();
-				for(int i = 0; i < al.size(); ++i) {
-					ClientThread tc = al.get(i);
-					try {
-                        tc.sInput.close();
-                        tc.sOutput.close();
-                        tc.socket.close();
-					}
-					catch(IOException ioE) {
-						// not much I can do
-					}
-				}
-			}
-			catch(Exception e) {
-				display("Exception closing the server and clients: " + e);
-			}
-		}
-		// something went bad
-		catch (IOException e) {
-            String msg = sdf.format(new Date()) + " Exception on new ServerSocket: " + e + "\n";
-			display(msg);
-		}
-		catch(ClassNotFoundException e) {
-			//nothing I can really do
-		}
+		sl.start();
+		sr.start();
 	}
 
     protected void stop() {
-		keepGoing = false;
+		sl.keepGoing = false;
+		sr.keepGoing = false;
 		// connect to myself as Client to exit statement 
 		// Socket socket = serverSocket.accept();
 		try {
-			new Socket("localhost", port);
+			new Socket("localhost", loginPort);
+			new Socket("localhost", registerPort);
 		}
 		catch(Exception e) {
 			// nothing I can do
@@ -142,11 +89,122 @@ public class Server {
 			}
 		}
 	}
+	
+	class StartLogin extends Thread {
+		
+		public boolean keepGoing;
+		
+		@Override
+		public void run() {
+			keepGoing = true;
+			/* create socket server and wait for connection requests */
+			try 
+			{
+				// the socket used by the server
+				ServerSocket serverSocket = new ServerSocket(loginPort);
 
+				// infinite loop to wait for connections
+				while(keepGoing) 
+				{
+					// format message saying we are waiting
+					display("Server waiting for Clients Login on port " + loginPort + ".");
+					
+					Socket socket = serverSocket.accept();  	// accept connection
+					//sg.appendEvent("accept!");
+					// if I was asked to stop
+					if(!keepGoing)
+						break;
+					
+					ClientThread t = new ClientThread(socket);
+					t.start();
+				}
+				// I was asked to stop
+				try {
+					serverSocket.close();
+					for(int i = 0; i < al.size(); ++i) {
+						ClientThread tc = al.get(i);
+						try {
+						tc.sInput.close();
+						tc.sOutput.close();
+						tc.socket.close();
+						}
+						catch(IOException ioE) {
+							// not much I can do
+						}
+					}
+				}
+				catch(Exception e) {
+					display("Exception closing the server and clients: " + e);
+				}
+			}
+			// something went bad
+			catch (IOException e) {
+	            String msg = sdf.format(new Date()) + " Exception on new login ServerSocket: " + e + "\n";
+				display(msg);
+			}
+		}
+	}
+
+class StartRegister extends Thread {
+		
+		public boolean keepGoing;
+		
+		@Override
+		public void run() {
+			keepGoing = true;
+			/* create socket server and wait for connection requests */
+			try 
+			{
+				// the socket used by the server
+				ServerSocket serverSocket = new ServerSocket(registerPort);
+
+				// infinite loop to wait for connections
+				while(keepGoing) 
+				{
+					// format message saying we are waiting
+					display("Server waiting for Clients Register on port " + loginPort + ".");
+					
+					Socket socket = serverSocket.accept();  	// accept connection
+					//sg.appendEvent("accept!");
+					// if I was asked to stop
+					if(!keepGoing)
+						break;
+					
+					RegisterThread t = new RegisterThread(socket);
+					t.start();
+				}
+				// I was asked to stop
+				try {
+					serverSocket.close();
+					for(int i = 0; i < al.size(); ++i) {
+						ClientThread tc = al.get(i);
+						try {
+						tc.sInput.close();
+						tc.sOutput.close();
+						tc.socket.close();
+						}
+						catch(IOException ioE) {
+							// not much I can do
+						}
+					}
+				}
+				catch(Exception e) {
+					display("Exception closing the server and clients: " + e);
+				}
+			}
+			// something went bad
+			catch (IOException e) {
+	            String msg = sdf.format(new Date()) + " Exception on new register ServerSocket: " + e + "\n";
+				display(msg);
+			}
+		}
+	}
+	
     class ClientThread extends Thread {
         // the socket where to listen/talk
 		Socket socket;
 		DBControl db;
+		// for I/O 
 		ObjectInputStream sInput;
 		ObjectOutputStream sOutput;
 		// my unique id (easier for deconnection)
@@ -159,11 +217,10 @@ public class Server {
 		String date;    	
         
         // Constructor
-		ClientThread(Socket socket, ObjectInputStream sInput, UserInfo ui) {
+		ClientThread(Socket socket) {
 			// a unique id
 			id = ++uniqueId;
 			this.socket = socket;
-            this.ui = ui;
 			db = new DBControl();
 			/* Creating both Data Stream */
 			System.out.println("Thread trying to create Object Input/Output Streams");
@@ -171,41 +228,54 @@ public class Server {
 			{
 				// create output first
 				this.sOutput = new ObjectOutputStream(socket.getOutputStream());
-				this.sInput  = sInput;
+				this.sInput  = new ObjectInputStream(socket.getInputStream());
+				ui = (UserInfo) sInput.readObject();
 				// read the username and password
 				display(ui.getName() + " is trying to connect.");
 			}
-			catch (IOException e) {
-				display("Exception creating new I/O Streams: " + e);
+			catch (IOException ioE) {
+				display("Exception creating new I/O Streams: " + ioE);
 				return;
+			}
+			catch(ClassNotFoundException e) {
+				//no thing i can do
 			}
 
             date = new Date().toString() + "\n";
 		}
 
-        private boolean verify() {
+        private int verify() {
+            	
             String tmp = db.getPassword(ui.getName());
             if(tmp.equals("-1")) {
                 //the user is not existed
 				display("The username " + ui.getName() + " is not existed!");
 				
-                return false;
+                return 0;
             }
             else if(!tmp.equals(ui.getPassword())) {
                 display(ui.getName() + ": password is incorrect!");
-                return false;
+                return 0;
             }
+            
+        	for(int i = 0; i < al.size(); ++i) {
+    			ClientThread ct = al.get(i);
+    			// found it, user has been in chat room
+    			if(ct.ui.getName().equals(this.ui.getName())) {
+    				return -1;
+    			}
+    		}
 
             display(ui.getName() + " connected!");
-            return true;
+            return 1;
         }
 
         public void run() {
             //verify the username and password\
-            if(!verify()) {
+        	int res = verify();
+            if(res == 0) {
                 try {
-					System.out.println("123");
-					sOutput.writeObject(new Boolean(false));
+					this.sOutput.writeObject(new Integer(0));
 					
                 }
                 catch(IOException ioE) {
@@ -213,12 +283,24 @@ public class Server {
                 }
                 return;
             }
+            if(res == -1) {
+            	try {
+					this.sOutput.writeObject(new Integer(-1));
+					
+                }
+                catch(IOException ioE) {
+                    display("Error sending result to " + ui.getName());
+                }
+                return;
+            }
+            
             try {
-                sOutput.writeObject(new Boolean(true));
+                sOutput.writeObject(new Integer(1));            
             }
             catch(IOException ioE) {
                 display("Error sending result to " + ui.getName());
             }           
+            al.add(this); //success, add to thread list
             
             //to loop until LOGOUT
             boolean keepGoing = true;
@@ -240,7 +322,7 @@ public class Server {
                     case ChatMessage.MESSAGE:
                     	// the messaage part of the ChatMessage
 				        String message = cm.getMessage();
-                        broadcast(ui.getName() + ": " + message);
+                        broadcast(ui.getName() + ":\n" + message);
                         break;
                     case ChatMessage.LOGOUT:
                         display(ui.getName() + " disconnected with a LOGOUT message.");
@@ -313,9 +395,8 @@ public class Server {
 		UserInfo ui;
 		//date
 
-		RegisterThread(Socket socket, ObjectInputStream sInput, UserInfo ui) {
+		RegisterThread(Socket socket) {
 			this.socket = socket;
-            this.ui = ui;
 			db = new DBControl();
 			/* Creating both Data Stream */
 			System.out.println("Thread trying to create Object Input/Output Streams");
@@ -323,13 +404,17 @@ public class Server {
 			{
 				// create output first
 				this.sOutput = new ObjectOutputStream(socket.getOutputStream());
-				this.sInput  = sInput;
+				this.sInput  = new ObjectInputStream(socket.getInputStream());
+				ui = (UserInfo)sInput.readObject();
 				// read the username and password
 				display(ui.getName() + " is trying to connect.");
 			}
-			catch (IOException e) {
-				display("Exception creating new I/O Streams: " + e);
+			catch (IOException ioE) {
+				display("Exception creating new I/O Streams: " + ioE);
 				return;
+			}
+			catch(ClassNotFoundException e) {
+				//nothing i can do
 			}
 
 		}

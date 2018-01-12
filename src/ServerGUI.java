@@ -70,13 +70,14 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener{
 			server.stop();
 			server = null;
 			stopStart.setText("Start");
+			appendEvent("Server stopped!\n");
 			return;
 		}
 
 		// ceate a new Server
 		server = new Server(this);
 		// and start it as a thread
-		new ServerRunning().start();
+		server.start();
 		stopStart.setText("Stop");
     }
 
@@ -110,16 +111,4 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener{
 		new ServerGUI(1500);
 	}
 
-    /*
-	 * A thread to run the Server
-	 */
-	class ServerRunning extends Thread {
-		public void run() {
-			server.start();         // should execute until if fails
-			// the server failed
-			stopStart.setText("Start");
-			appendEvent("Server crashed\n");
-			server = null;
-		}
-	}
 }
