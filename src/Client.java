@@ -39,12 +39,11 @@ public class Client {
         }
         
         try {
-            sInput = new ObjectInputStream(socket.getInputStream());
             sOutput = new ObjectOutputStream(socket.getOutputStream());
-            System.out.println("123");
+            //System.out.println("123");
         }
         catch(IOException eIO) {
-            dialog("Exception on creating I/O stream");
+            dialog("Exception on creating Ouput stream");
             disconnect();
             return false;
         }
@@ -53,6 +52,8 @@ public class Client {
         try {
             sOutput.writeObject(new UserInfo(UserInfo.LOGIN, username, password));
             //sOutput.writeObject(password);
+            sInput = new ObjectInputStream(socket.getInputStream());
+            System.out.println("213");
             ret = (Boolean) sInput.readObject();           
         }
         catch(IOException eIO) {
@@ -84,10 +85,21 @@ public class Client {
             return false;
         }
 
+        try {
+            sOutput = new ObjectOutputStream(socket.getOutputStream());
+            System.out.println("123");
+        }
+        catch(IOException eIO) {
+            dialog("Exception on creating Ouput stream");
+            disconnect();
+            return false;
+        }
+
         boolean ret = false;
         try {
             sOutput.writeObject(new UserInfo(UserInfo.REGISTER, username, password));
             //sOutput.writeObject(password);
+            sInput = new ObjectInputStream(socket.getInputStream());
             ret = (Boolean) sInput.readObject();           
         }
         catch(IOException eIO) {
@@ -166,6 +178,8 @@ public class Client {
     }
     
     class ListenFromServer extends Thread {
+            
+
         public void run() {
             while(true) {
                 try {

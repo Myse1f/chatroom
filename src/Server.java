@@ -41,22 +41,22 @@ public class Server {
 				display("Server waiting for Clients on port " + port + ".");
 				
 				Socket socket = serverSocket.accept();  	// accept connection
-				sg.appendEvent("accept!");
+				//sg.appendEvent("accept!");
 				// if I was asked to stop
 				if(!keepGoing)
 					break;
 
 				ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-				sg.appendEvent("accept!");
+				//sg.appendEvent("accept!");
 				UserInfo ui = (UserInfo) ois.readObject();
 
                 switch(ui.getType()) {
                     case UserInfo.REGISTER:
-                        RegisterThread t1 = new RegisterThread(socket, ui);
+                        RegisterThread t1 = new RegisterThread(socket, ois, ui);
                         t1.start();
                         break;
                     case UserInfo.LOGIN:
-                        ClientThread t2 = new ClientThread(socket, ui);  // make a thread of it
+                        ClientThread t2 = new ClientThread(socket, ois, ui);  // make a thread of it
                         al.add(t2);									// save it in the ArrayList
                         t2.start();
                         break;
@@ -159,7 +159,7 @@ public class Server {
 		String date;    	
         
         // Constructor
-		ClientThread(Socket socket, UserInfo ui) {
+		ClientThread(Socket socket, ObjectInputStream sInput, UserInfo ui) {
 			// a unique id
 			id = ++uniqueId;
 			this.socket = socket;
@@ -170,8 +170,8 @@ public class Server {
 			try
 			{
 				// create output first
-				sOutput = new ObjectOutputStream(socket.getOutputStream());
-				sInput  = new ObjectInputStream(socket.getInputStream());
+				this.sOutput = new ObjectOutputStream(socket.getOutputStream());
+				this.sInput  = sInput;
 				// read the username and password
 				display(ui.getName() + " is trying to connect.");
 			}
@@ -204,7 +204,9 @@ public class Server {
             //verify the username and password\
             if(!verify()) {
                 try {
-                    sOutput.writeObject(new Boolean(false));
+					System.out.println("123");
+					sOutput.writeObject(new Boolean(false));
+					
                 }
                 catch(IOException ioE) {
                     display("Error sending result to " + ui.getName());
@@ -311,7 +313,7 @@ public class Server {
 		UserInfo ui;
 		//date
 
-		RegisterThread(Socket socket, UserInfo ui) {
+		RegisterThread(Socket socket, ObjectInputStream sInput, UserInfo ui) {
 			this.socket = socket;
             this.ui = ui;
 			db = new DBControl();
@@ -320,8 +322,8 @@ public class Server {
 			try
 			{
 				// create output first
-				sOutput = new ObjectOutputStream(socket.getOutputStream());
-				sInput  = new ObjectInputStream(socket.getInputStream());
+				this.sOutput = new ObjectOutputStream(socket.getOutputStream());
+				this.sInput  = sInput;
 				// read the username and password
 				display(ui.getName() + " is trying to connect.");
 			}

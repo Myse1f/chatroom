@@ -229,7 +229,7 @@ public class ClientGUI extends JFrame implements ActionListener, KeyListener {
 
 	@Override
 	public void keyTyped(KeyEvent e) {
-		//ctrl + enter 一起按下， 发送信息
+		//ctrl + enter 一ave been pressed
 		if (e.getModifiers() == KeyEvent.CTRL_MASK && e.getKeyChar() == KeyEvent.VK_ENTER) {
 			client.sendMessage(new ChatMessage(ChatMessage.MESSAGE, tm.getText()));
             tm.setText("");

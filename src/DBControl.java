@@ -30,7 +30,7 @@ public class DBControl {
 			e.printStackTrace();
 		}
 		try{
-			con = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/test", "root", "");
+			con = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/test", "root", "210031");
 			System.out.println("CONNECT SUCCESSFULLY!");
 		}
 		catch(SQLException e) {
