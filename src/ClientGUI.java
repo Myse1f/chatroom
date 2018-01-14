@@ -1,8 +1,6 @@
-import javax.naming.event.ObjectChangeListener;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.net.NoRouteToHostException;
 
 /*
  * Client GUI

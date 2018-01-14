@@ -3,6 +3,8 @@ import java.net.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+
+
 public class Server {
     // a unique ID for each connection
 	private static int uniqueId;
@@ -20,12 +22,14 @@ public class Server {
 	//thread for login and register
 	private StartLogin sl;
 	private StartRegister sr;
+	//output stream for log file
+	BufferedWriter bw;
 	
     public Server(ServerGUI sg) {
 		// GUI or not
 		this.sg = sg;
 		// to display hh:mm:ss
-		sdf = new SimpleDateFormat("HH:mm:ss");
+		sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		// ArrayList for the Client list
 		al = new ArrayList<ClientThread>();
 		
@@ -35,6 +39,13 @@ public class Server {
 	}
 
     public void start() {
+		//initialize buffer writer
+		try {
+			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("../log.txt", true)));
+		}
+		catch (IOException e) {
+			sg.appendEvent("Error in open log file!");
+		}	
 		sl.start();
 		sr.start();
 	}
@@ -42,6 +53,14 @@ public class Server {
     protected void stop() {
 		sl.keepGoing = false;
 		sr.keepGoing = false;
+			try {
+				bw.flush();
+				bw.close();
+			} catch (IOException e1) {
+				sg.appendEvent("Error in closing log file!");
+			}
+			
+		
 		// connect to myself as Client to exit statement 
 		// Socket socket = serverSocket.accept();
 		try {
@@ -53,9 +72,15 @@ public class Server {
 		}
 	}
 
-    private void display(String msg) {
-		String log = sdf.format(new Date()) + " " + msg;
-		sg.appendEvent(log + "\n");
+    public void display(String msg) {
+		String log = sdf.format(new Date()) + " " + msg + "\n";
+		sg.appendEvent(log);
+		try {
+			bw.write(log);
+			bw.newLine();
+		} catch (IOException e) {
+			sg.appendEvent("Error in writing into log!");
+		}
 	}
 
     private synchronized void broadcast(String message) {

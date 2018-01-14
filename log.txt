@@ -1,0 +1,12 @@
+2018-01-14 12:52:42 Server waiting for Clients Login on port 1500.
+
+2018-01-14 12:52:42 Server waiting for Clients Register on port 1500.
+
+2018-01-14 12:52:43 Server stop!
+
+2018-01-14 12:52:44 Server waiting for Clients Login on port 1500.
+
+2018-01-14 12:52:44 Server waiting for Clients Register on port 1500.
+
+2018-01-14 12:52:45 Server stop!
+
